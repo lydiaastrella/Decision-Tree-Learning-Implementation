@@ -2,6 +2,7 @@ from sklearn import datasets
 import pandas as pd
 import numpy as np
 import math
+import copy
 
 #load dataset iris
 iris = datasets.load_iris()
@@ -165,7 +166,7 @@ def continuous_attributes(data): #me-list index2 atribut yang datanya continuous
     return tabel_continuous_attributes
 
 def sort_by_atribute(data, idx_atribut): #sorting data values supaya jadi sort berdasarkan atribut tertentu
-    data_test.data_values = data_test.data_values[data_test.data_values[:,1].argsort()]
+    data.data_values = data.data_values[data.data_values[:,1].argsort()]
 
 def get_hasil(data): #mendapat hasil data (yes/no)
     return data.data_values[:,data.column-1] 
@@ -193,7 +194,6 @@ def idx_best_gain (data, idx_atribut, tabel_idx_label_change):
     for idx_changed_label in tabel_idx_label_change:
         data_temp = copy.deepcopy(data)
         change_continuous_values(data_temp, idx_atribut, idx_changed_label)
-        print(gain_info(data_temp, idx_atribut))
         if (gain_info(data_temp, idx_atribut) > max_gain):
             max_gain = gain_info(data_temp, idx_atribut)
             idx_best = idx_changed_label
@@ -228,25 +228,11 @@ def change_continuous_values (data, idx_atribut, idx_changed_label):
         data.data_properties.append(column)
 
 def change_continuous_atributes (data):
-    print(continuous_attributes(data))
     for idx_atribut in continuous_attributes(data):
-        print("idx atribut : ")
-        print(idx_atribut)
-
         sort_by_atribute(data, idx_atribut)
-        print("sorted data : ")
-        print(data.data_values)
-
         tabel_idx_label_change = search_label_change(data)
-        print("tabel idx label change : ")
-        print(tabel_idx_label_change)
-
         idx_split = idx_best_gain(data, idx_atribut, tabel_idx_label_change)
-        print("idx split : ")
-        print(idx_split)
-
         change_continuous_values(data, idx_atribut, idx_split)
-        print(data.data_values)
 
 #-------------HANDLE MISSING VALUE------------
 def most_common_value(data, col):
@@ -296,6 +282,7 @@ def change_missing_value (data):
 
 #-------------ALGO------------
 def id3(data, dataframe):
+    print("--------------ID3------------")
     df = dataframe
     #if all examples are positive or negative
     if(data.column > 1):
@@ -338,15 +325,21 @@ def id3(data, dataframe):
 
 def c45(data, dataframe):
     #handle missing value attributes
+    print("--------------C45------------")
     data = change_missing_value(data)
+
+    try:
+        change_continuous_atributes(data)
+    except(IndexError):
+        pass
 
     df = dataframe
     #if all examples are positive or negative
     if(data.column > 1):
         if (most_common_value(data, data.column-1)[1] == (data.row)):
             root = Vertex(most_common_value(data,data.column-1)[0])
-            return root    
-    
+            return root
+            
     #if attributes is empty
     if(data.column-1 == 0):
         val = most_common_value(data,0)
@@ -502,10 +495,9 @@ def print_tree(tree,idx):
 rules = []
 
 data_tennis = Data(df_tennis)
-hasil = id3(data_tennis, df_tennis)
+data_spek = Data(df_spek)
+hasil = id3(data_spek, df_spek)
 print_tree(hasil,0)
 
-print(data_tennis.data_values)
-
-hasil = c45(data_tennis, df_tennis)
+hasil = c45(data_spek, df_spek)
 print_tree(hasil,0)
