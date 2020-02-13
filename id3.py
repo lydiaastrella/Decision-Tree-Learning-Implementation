@@ -1,4 +1,5 @@
 from sklearn import datasets
+from copy import copy, deepcopy
 import pandas as pd
 import numpy as np
 import math
@@ -11,7 +12,15 @@ iris = datasets.load_iris()
 df_iris = pd.DataFrame(data= np.c_[iris['data'], iris['target']],columns= iris['feature_names'] + ['target'])
 df_spek = pd.read_csv('iris.csv')
 df_tennis = pd.read_csv('tennis.csv')
-df_tennis
+
+separator_tennis = round((4/5)*len(df_tennis.index))
+training_tennis = (df_tennis.iloc[:separator_tennis, :]).reset_index(drop = True)
+validation_tennis = (df_tennis.iloc[separator_tennis:, :]).reset_index(drop = True)
+print(validation_tennis)
+
+separator_iris = round((4/5)*len(df_iris.index))
+training_iris = df_iris.iloc[:, :separator_iris]
+validation_iris = df_iris.iloc[:, separator_iris:]
 
 #----------TREE----------
 class Vertex:
@@ -370,8 +379,10 @@ def c45(data, dataframe):
             attr_value = next(iterate_data)
             val = Vertex(most_common_value(data, data.column-1)[0])
             new_edge = Edge(attr_value, val)
-            root.add_edge(new_edge)
-    
+            root.add_edge(new_edge)    
+    return root
+
+def prune(tree, validation_data, validation_dataframe, rules, isContinuous):
     # PRUNING FUNCTIONS
     def make_rules(tree, rule):
         global rules
@@ -420,27 +431,31 @@ def c45(data, dataframe):
                     rule_idx += 1
         return vertices[0]
 
-    def prune(validation_data, validation_dataframe, rules, isContinuous):
+    def pruning(validation_data, validation_dataframe, rules, isContinuous):
         best_ruleset = rules
         best_error = count_errors(predict_results(validation_data, rules), validation_data.data_values[:, validation_data.column-1], isContinuous)
         for rule in rules:
+            pruning_dataframe = deepcopy(validation_dataframe)
+            pruning_data = deepcopy(validation_data)
             keys = list(rule.keys())
             init_n_keys = len(keys)
             for i in range(init_n_keys-1):
-                temp_rules = rules.copy()
+                temp_rules = deepcopy(rules)
                 for rule2 in temp_rules:
                     if (rule == rule2):
-                        temp_rule = rule2.copy()
-                for i in range(i, len(list(temp_rule.keys()))):
-                    del temp_rule[keys[i]]
-                dataframe = validation_dataframe
-                data = validation_data
-                for key in list(temp_rule.keys()):
-                    if (key != 'result'):
-                        data, dataframe = get_data_certain_value(dataframe, key, temp_rule[key])
-                temp_rule['result'] = most_common_value(data, data.column-1)[0]
-                prediction = predict_results(data, temp_rules)
-                errors = count_errors(prediction, data.data_values[:, data.column-1], isContinuous)
+                        temp_rule = rule2
+                for j in range(len(list(temp_rule.keys()))-1, i, -1):
+                    if (list(temp_rule.keys())[i]) in temp_rule:
+                        del temp_rule[list(temp_rule.keys())[j]]
+                if (len(list(temp_rule.keys())) != 0):
+                    iteration_data = deepcopy(pruning_data)
+                    iteration_dataframe = deepcopy(pruning_dataframe)
+                    for key in list(temp_rule.keys()):
+                        if (key != 'result'):
+                            iteration_data, iteration_dataframe = get_data_certain_value(iteration_dataframe, key, temp_rule[key])
+                    temp_rule['result'] = most_common_value(pruning_data, pruning_data.column-1)[0]
+                prediction = predict_results(validation_data, temp_rules)
+                errors = count_errors(prediction, validation_data.data_values[:, validation_data.column-1], isContinuous)
                 if (errors < best_error):
                     best_error = errors
                     best_ruleset = temp_rules
@@ -477,8 +492,8 @@ def c45(data, dataframe):
                         cummulative_error += 1
             return cummulative_error
 
-    make_rules(root, {})
-    new_rules = prune(data, dataframe, rules, False)
+    make_rules(tree, {})
+    new_rules = pruning(validation_data, validation_dataframe, rules, isContinuous)
     final = rules_to_tree(new_rules)
     return final
 
@@ -494,10 +509,15 @@ def print_tree(tree,idx):
 
 rules = []
 
-data_tennis = Data(df_tennis)
-data_spek = Data(df_spek)
-hasil = id3(data_spek, df_spek)
-print_tree(hasil,0)
+data_training_tennis = Data(training_tennis)
+hasil_id3 = id3(data_training_tennis, training_tennis)
+print_tree(hasil_id3,0)
 
-hasil = c45(data_spek, df_spek)
-print_tree(hasil,0)
+print(data_training_tennis.data_values)
+
+hasil_c45 = c45(data_training_tennis, training_tennis)
+print_tree(hasil_c45,0)
+
+data_validasi_tennis = Data(validation_tennis)
+hasil_diprune = prune(hasil_c45, data_validasi_tennis, validation_tennis, rules, False)
+print_tree(hasil_diprune, 0)
