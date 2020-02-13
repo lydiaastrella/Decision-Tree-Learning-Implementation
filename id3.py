@@ -44,6 +44,7 @@ class ValueProperties:
 class Data:
     #convert pandas dataframe to Data
     def __init__(self, dataframe):
+        dataframe = dataframe.replace(np.nan, '', regex=True)
         self.row = len(dataframe)
         self.column = len(dataframe.columns)
 
@@ -131,6 +132,23 @@ def most_common_value(data, col):
             count = data.data_properties[col][a].count
             name = data.data_properties[col][a].name
     return [name,count]
+
+def change_missing_value (data):
+    for j in range (data.column) :
+        for i in range (data.row):
+            if data.data_values[i,j] == '':
+                data.data_values[i,j] = most_common_value(data, j)[0]
+                found = False
+                i=0
+                while (not(found) and i<data.target_attribute_count):
+                    if(data.data_values[i,data.column-1]==data.target_attribute[i]):
+                        found = True
+                    else:
+                        i+=1
+                if (found):
+                    data.data_properties[j][data.data_values[i,j]].label[data.target_attribute[i]] += 1
+                del data.data_properties[j]['']
+    return data
 
 def id3(data, dataframe):
     df = dataframe
