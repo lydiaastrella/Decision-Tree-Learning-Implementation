@@ -132,7 +132,10 @@ def gain_ratio(data, int_column):
         split_in_info -= probability * math.log(probability,2)
         
     gain = gain_info(data,int_column)
-    gain_ratio_value = gain / split_in_info
+    if(split_in_info==0):
+        gain_ratio_value = 999
+    else:
+        gain_ratio_value = gain / split_in_info
     return gain_ratio_value
 
 def most_common_value(data, col):
@@ -176,7 +179,6 @@ def change_missing_value (data):
                     data.data_properties[j][''].label[data.target_attribute[i]] -= 1
                     if not(j in need_to_be_deleted):
                         need_to_be_deleted.append(j)
-    print(need_to_be_deleted)
     for x in need_to_be_deleted:
         del data.data_properties[x]['']
     return data
@@ -254,9 +256,8 @@ def c45(data, dataframe):
             iterate_data = iter(data.data_properties[best_attr])
             for i in range(len(data.data_properties[best_attr])):
                 attr_value = next(iterate_data)
-                print(attr_value)
                 new_subset_data, df = get_data_certain_value(df, data.attributes[best_attr], attr_value)
-                subtree = id3(new_subset_data, df)
+                subtree = c45(new_subset_data, df)
                 new_edge = Edge(attr_value, subtree)
                 root.add_edge(new_edge)
                 df = dataframe
@@ -279,8 +280,8 @@ def print_tree(tree,idx):
             print_tree(tree.edges[i].target_vertex,idx+1)
 
 data_tennis = Data(df_tennis)
-# hasil = id3(data_tennis, df_tennis)
-# print_tree(hasil,0)
+hasil = id3(data_tennis, df_tennis)
+print_tree(hasil,0)
 
 hasil = c45(data_tennis, df_tennis)
 print_tree(hasil,0)
