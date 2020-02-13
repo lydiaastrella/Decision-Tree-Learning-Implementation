@@ -145,6 +145,18 @@ def most_common_value(data, col):
             count = data.data_properties[col][a].count
             name = data.data_properties[col][a].name
     return [name,count]
+    
+def most_common_target_value(data, attr, row): #for missing attribute value issues
+    count = 0
+    name = ""
+    target = data.data_values[row][len(data.data_values[row])-1]
+    iterate_data = iter(data.data_properties[attr])
+    for i in range(len(data.data_properties[attr])):
+        a = next(iterate_data)
+        if (count < (data.data_properties[attr][a].label[target])):
+            count = data.data_properties[attr][a].label[target]
+            name = data.data_properties[attr][a].name
+    return [name,count]
 
 def change_missing_value (data):
     for j in range (data.column) :
