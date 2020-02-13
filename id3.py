@@ -159,6 +159,7 @@ def most_common_target_value(data, attr, row): #for missing attribute value issu
     return [name,count]
 
 def change_missing_value (data):
+    need_to_be_deleted = []
     for j in range (data.column) :
         for i in range (data.row):
             if data.data_values[i,j] == '':
@@ -172,8 +173,14 @@ def change_missing_value (data):
                         i+=1
                 if (found):
                     data.data_properties[j][data.data_values[i,j]].label[data.target_attribute[i]] += 1
-                del data.data_properties[j]['']
+                    data.data_properties[j][''].label[data.target_attribute[i]] -= 1
+                    if not(j in need_to_be_deleted):
+                        need_to_be_deleted.append(j)
+    print(need_to_be_deleted)
+    for x in need_to_be_deleted:
+        del data.data_properties[x]['']
     return data
+
 
 def id3(data, dataframe):
     df = dataframe
@@ -215,7 +222,52 @@ def id3(data, dataframe):
             new_edge = Edge(attr_value, val)
             root.add_edge(new_edge)
     return root
+
+def c45(data, dataframe):
+    #handle missing value attributes
+    data = change_missing_value(data)
+
+    df = dataframe
+    #if all examples are positive or negative
+    if(data.column > 1):
+        if (most_common_value(data, data.column-1)[1] == (data.row)):
+            root = Vertex(most_common_value(data,data.column-1)[0])
+            return root    
+    
+    #if attributes is empty
+    if(data.column-1 == 0):
+        val = most_common_value(data,0)
+        root = Vertex(val[0])
+        return root
+    else:
+        #count gain ratio for every attributes
+        gain = gain_ratio(data, 0)
+        best_attr = 0
+        for x in range(len(data.attributes)-1):
+            if(gain < gain_ratio(data, x+1)):
+                gain = gain_ratio(data, x+1)
+                best_attr = x+1
+        root = Vertex(data.attributes[best_attr])
+        if(len(data.data_properties[best_attr]) > 0):
             
+            #check every possible value of best_attr
+            iterate_data = iter(data.data_properties[best_attr])
+            for i in range(len(data.data_properties[best_attr])):
+                attr_value = next(iterate_data)
+                print(attr_value)
+                new_subset_data, df = get_data_certain_value(df, data.attributes[best_attr], attr_value)
+                subtree = id3(new_subset_data, df)
+                new_edge = Edge(attr_value, subtree)
+                root.add_edge(new_edge)
+                df = dataframe
+        else:
+            iterate_data = iter(data.data_properties[best_attr])
+            attr_value = next(iterate_data)
+            val = Vertex(most_common_value(data, data.column-1)[0])
+            new_edge = Edge(attr_value, val)
+            root.add_edge(new_edge)
+    return root
+
 def print_tree(tree,idx):
     print(tree.name)
     if(len(tree.edges) > 0):
@@ -227,5 +279,8 @@ def print_tree(tree,idx):
             print_tree(tree.edges[i].target_vertex,idx+1)
 
 data_tennis = Data(df_tennis)
-hasil = id3(data_tennis, df_tennis)
+# hasil = id3(data_tennis, df_tennis)
+# print_tree(hasil,0)
+
+hasil = c45(data_tennis, df_tennis)
 print_tree(hasil,0)
