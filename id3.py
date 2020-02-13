@@ -1,5 +1,6 @@
 from sklearn import datasets
 from copy import copy, deepcopy
+import os,sys
 import pandas as pd
 import numpy as np
 import math
@@ -18,9 +19,9 @@ training_tennis = (df_tennis.iloc[:separator_tennis, :]).reset_index(drop = True
 validation_tennis = (df_tennis.iloc[separator_tennis:, :]).reset_index(drop = True)
 print(validation_tennis)
 
-separator_iris = round((4/5)*len(df_iris.index))
-training_iris = df_iris.iloc[:, :separator_iris]
-validation_iris = df_iris.iloc[:, separator_iris:]
+separator_iris = round((4/5)*len(df_spek.index))
+training_iris = df_spek.iloc[:separator_iris, :].reset_index(drop = True)
+validation_iris = df_spek.iloc[separator_iris:, :].reset_index(drop = True)
 
 #----------TREE----------
 class Vertex:
@@ -291,7 +292,6 @@ def change_missing_value (data):
 
 #-------------ALGO------------
 def id3(data, dataframe):
-    print("--------------ID3------------")
     df = dataframe
     #if all examples are positive or negative
     if(data.column > 1):
@@ -334,13 +334,7 @@ def id3(data, dataframe):
 
 def c45(data, dataframe):
     #handle missing value attributes
-    print("--------------C45------------")
     data = change_missing_value(data)
-
-    try:
-        change_continuous_atributes(data)
-    except(IndexError):
-        pass
 
     df = dataframe
     #if all examples are positive or negative
@@ -512,9 +506,15 @@ rules = []
 data_training_tennis = Data(training_tennis)
 data_training_iris = Data(training_iris)
 
+print("--------------ID3------------")
+
 hasil_id3 = id3(data_training_iris, training_iris)
 print_tree(hasil_id3,0)
 
+
+print("--------------C45------------")
+
+change_continuous_atributes(data_training_iris)
 print(data_training_iris.data_values)
 
 hasil_c45 = c45(data_training_iris, training_iris)
@@ -522,5 +522,5 @@ print_tree(hasil_c45,0)
 
 data_validasi_tennis = Data(validation_tennis)
 data_validasi_iris = Data(validation_iris)
-hasil_diprune = prune(hasil_c45, data_validasi_iris, validation_iris, rules, True)
+hasil_diprune = prune(hasil_c45, data_validasi_iris, validation_iris, rules, False)
 print_tree(hasil_diprune, 0)
