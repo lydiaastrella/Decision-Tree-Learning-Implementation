@@ -425,9 +425,9 @@ def c45(data, dataframe):
                     rule_idx += 1
         return vertices[0]
 
-    def prune(validation_data, validation_dataframe, rules):
+    def prune(validation_data, validation_dataframe, rules, isContinuous):
         best_ruleset = rules
-        best_error = count_errors(predict_results(validation_data, rules), validation_data.data_values[:, validation_data.column-1])
+        best_error = count_errors(predict_results(validation_data, rules), validation_data.data_values[:, validation_data.column-1], isContinuous)
         for rule in rules:
             keys = list(rule.keys())
             init_n_keys = len(keys)
@@ -445,7 +445,7 @@ def c45(data, dataframe):
                         data, dataframe = get_data_certain_value(dataframe, key, temp_rule[key])
                 temp_rule['result'] = most_common_value(data, data.column-1)[0]
                 prediction = predict_results(data, temp_rules)
-                errors = count_errors(prediction, data.data_values[:, data.column-1])
+                errors = count_errors(prediction, data.data_values[:, data.column-1], isContinuous)
                 if (errors < best_error):
                     best_error = errors
                     best_ruleset = temp_rules
@@ -468,18 +468,22 @@ def c45(data, dataframe):
         return results
 
     # return number of errors (discreet only for now)
-    def count_errors(r1, r2):
+    def count_errors(r1, r2, isContinuous):
         if len(r1) != len(r2):
-            return -1
+            return 999
         else:
-            n_errors = 0
-            for i in range(len(r1)):
-                if (r1[i] != r2[i]):
-                    n_errors += 1
-            return n_errors
+            cummulative_error = 0
+            if isContinuous:
+                for i in range(len(r1)):
+                    cummulative_error += (r1[i] - r2[i])*(r1[i] - r2[i])/2
+            else:
+                for i in range(len(r1)):
+                    if (r1[i] != r2[i]):
+                        cummulative_error += 1
+            return cummulative_error
 
     make_rules(root, {})
-    new_rules = prune(data, dataframe, rules)
+    new_rules = prune(data, dataframe, rules, False)
     final = rules_to_tree(new_rules)
     return final
 
