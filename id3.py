@@ -137,7 +137,116 @@ def gain_ratio(data, int_column):
     else:
         gain_ratio_value = gain / split_in_info
     return gain_ratio_value
+#-------------CONTINUES HANDLING-------------------
+def is_number (atribut): #apakah atribut tertentu berisi data number atau bukan
+    try:
+        a = atribut[0]/2
+    except TypeError:
+        return False
+    return True
 
+def count_unique_values (atribut):
+    unique_atribut = set(atribut)
+    unique_atribut_count = len(unique_atribut)
+    return unique_atribut_count
+
+def is_continuous(atribut): #apakah atribut tertentu berisi data continuous atau bukan
+    if (is_number(atribut) and (count_unique_values(atribut) > 2)):
+        return True
+    else:
+        return False
+
+def continuous_attributes(data): #me-list index2 atribut yang datanya continuous
+    tabel_continuous_attributes = []
+    for idx_atribut in range (data.column):
+        if(is_continuous(data.data_values[:,idx_atribut])):
+            tabel_continuous_attributes.append(idx_atribut)
+    return tabel_continuous_attributes
+
+def sort_by_atribute(data, idx_atribut): #sorting data values supaya jadi sort berdasarkan atribut tertentu
+    data_test.data_values = data_test.data_values[data_test.data_values[:,1].argsort()]
+
+def get_hasil(data): #mendapat hasil data (yes/no)
+    return data.data_values[:,data.column-1] 
+
+def search_label_change(data): #cari column yang yes/no-nya berubah
+    tabel_idx_label_change = []
+    label_before = get_hasil(data)[0]
+    for idx in range (data.row):
+        label_now = get_hasil(data)[idx]
+        if (label_before != label_now):
+            tabel_idx_label_change.append(idx)
+            label_before = label_now
+    return tabel_idx_label_change
+
+def create_changed_data (data, idx_atribut, idx_changed_label): #menghasilkan data baru yang sudah diganti atributnya (splitting)
+    data_temp = copy.deepcopy(data)
+    change_continuous_values(data_temp, idx_atribut, idx_changed_label)
+    return data_temp
+
+def idx_best_gain (data, idx_atribut, tabel_idx_label_change):
+    max_gain = gain_ratio(data, idx_atribut)
+
+    idx_best = tabel_idx_label_change[0]
+
+    for idx_changed_label in tabel_idx_label_change:
+        data_temp = copy.deepcopy(data)
+        change_continuous_values(data_temp, idx_atribut, idx_changed_label)
+        print(gain_ratio(data_temp, idx_atribut))
+        if (gain_ratio(data_temp, idx_atribut) > max_gain):
+            max_gain = gain_ratio(data_temp, idx_atribut)
+            idx_best = idx_changed_label
+
+    return idx_best
+
+def change_continuous_values (data, idx_atribut, idx_changed_label): 
+    new_value = str(data.data_values[idx_changed_label,idx_atribut])
+    for idx in range (data.row):
+        if (idx < idx_changed_label):
+            data.data_values[idx,idx_atribut] = "< " + new_value
+        else:
+            data.data_values[idx,idx_atribut] = ">= " + new_value
+    
+    data.data_properties=[]
+    for i in range (data.column):
+        column={}
+        for x in data.data_values[:, i]:
+            if(not(x in column)):
+                count=0
+                for y in data.data_values[:, i]:
+                    if ( y == x):
+                        count+=1
+                value = ValueProperties(x,count)
+                for z in data.target_attribute:
+                    count_target=0
+                    for j in range (data.row):
+                        if(data.data_values[j][data.column-1]==z and data.data_values[j][i]==x):
+                            count_target+=1
+                    value.add_label(z,count_target)
+                column[x]=value
+        data.data_properties.append(column)
+
+def change_continuous_atributes (data):
+    for idx_atribut in continuous_attributes(data):
+        print("idx atribut : ")
+        print(idx_atribut)
+
+        sort_by_atribute(data, idx_atribut)
+        print("changed data : ")
+        print(data.data_values)
+
+        tabel_idx_label_change = search_label_change(data)
+        print("tabel idx label change : ")
+        print(tabel_idx_label_change)
+
+        idx_split = idx_best_gain(data, idx_atribut, tabel_idx_label_change)
+        print("idx split : ")
+        print(idx_split)
+
+        change_continuous_values(data, idx_atribut, idx_split)
+        print(data.data_values)
+
+#-------------HANDLE MISSING VALUE------------
 def most_common_value(data, col):
     count = 0
     name = ""
@@ -183,7 +292,7 @@ def change_missing_value (data):
         del data.data_properties[x]['']
     return data
 
-
+#-------------ALGO------------
 def id3(data, dataframe):
     df = dataframe
     #if all examples are positive or negative
