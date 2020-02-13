@@ -8,7 +8,7 @@ iris = datasets.load_iris()
 
 #convert scikit learn dataset to pandas dataframe
 df_iris = pd.DataFrame(data= np.c_[iris['data'], iris['target']],columns= iris['feature_names'] + ['target'])
-
+df_spek = pd.read_csv('iris.csv')
 df_tennis = pd.read_csv('tennis.csv')
 df_tennis
 
@@ -137,6 +137,7 @@ def gain_ratio(data, int_column):
     else:
         gain_ratio_value = gain / split_in_info
     return gain_ratio_value
+
 #-------------CONTINUES HANDLING-------------------
 def is_number (atribut): #apakah atribut tertentu berisi data number atau bukan
     try:
@@ -158,7 +159,7 @@ def is_continuous(atribut): #apakah atribut tertentu berisi data continuous atau
 
 def continuous_attributes(data): #me-list index2 atribut yang datanya continuous
     tabel_continuous_attributes = []
-    for idx_atribut in range (data.column):
+    for idx_atribut in range (data.column-1):
         if(is_continuous(data.data_values[:,idx_atribut])):
             tabel_continuous_attributes.append(idx_atribut)
     return tabel_continuous_attributes
@@ -185,16 +186,16 @@ def create_changed_data (data, idx_atribut, idx_changed_label): #menghasilkan da
     return data_temp
 
 def idx_best_gain (data, idx_atribut, tabel_idx_label_change):
-    max_gain = gain_ratio(data, idx_atribut)
+    max_gain = gain_info(data, idx_atribut)
 
     idx_best = tabel_idx_label_change[0]
 
     for idx_changed_label in tabel_idx_label_change:
         data_temp = copy.deepcopy(data)
         change_continuous_values(data_temp, idx_atribut, idx_changed_label)
-        print(gain_ratio(data_temp, idx_atribut))
-        if (gain_ratio(data_temp, idx_atribut) > max_gain):
-            max_gain = gain_ratio(data_temp, idx_atribut)
+        print(gain_info(data_temp, idx_atribut))
+        if (gain_info(data_temp, idx_atribut) > max_gain):
+            max_gain = gain_info(data_temp, idx_atribut)
             idx_best = idx_changed_label
 
     return idx_best
@@ -227,12 +228,13 @@ def change_continuous_values (data, idx_atribut, idx_changed_label):
         data.data_properties.append(column)
 
 def change_continuous_atributes (data):
+    print(continuous_attributes(data))
     for idx_atribut in continuous_attributes(data):
         print("idx atribut : ")
         print(idx_atribut)
 
         sort_by_atribute(data, idx_atribut)
-        print("changed data : ")
+        print("sorted data : ")
         print(data.data_values)
 
         tabel_idx_label_change = search_label_change(data)
