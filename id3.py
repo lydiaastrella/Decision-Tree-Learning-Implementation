@@ -122,6 +122,19 @@ def gain_info(data, int_column):
     gain = entropy
     return gain
 
+def gain_ratio(data, int_column):
+    split_in_info=0
+    iterate_data = iter(data.data_properties[int_column])
+    for i in range(len(data.data_properties[int_column])):
+        value_name = next(iterate_data)
+        value_property = data.data_properties[int_column][value_name]
+        probability = value_property.count / data.row
+        split_in_info -= probability * math.log(probability,2)
+        
+    gain = gain_info(data,int_column)
+    gain_ratio_value = gain / split_in_info
+    return gain_ratio_value
+
 def most_common_value(data, col):
     count = 0
     name = ""
