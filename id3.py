@@ -510,14 +510,17 @@ def print_tree(tree,idx):
 rules = []
 
 data_training_tennis = Data(training_tennis)
-hasil_id3 = id3(data_training_tennis, training_tennis)
+data_training_iris = Data(training_iris)
+
+hasil_id3 = id3(data_training_iris, training_iris)
 print_tree(hasil_id3,0)
 
-print(data_training_tennis.data_values)
+print(data_training_iris.data_values)
 
-hasil_c45 = c45(data_training_tennis, training_tennis)
+hasil_c45 = c45(data_training_iris, training_iris)
 print_tree(hasil_c45,0)
 
 data_validasi_tennis = Data(validation_tennis)
-hasil_diprune = prune(hasil_c45, data_validasi_tennis, validation_tennis, rules, False)
+data_validasi_iris = Data(validation_iris)
+hasil_diprune = prune(hasil_c45, data_validasi_iris, validation_iris, rules, True)
 print_tree(hasil_diprune, 0)
