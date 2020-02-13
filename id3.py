@@ -17,7 +17,6 @@ df_tennis = pd.read_csv('tennis.csv')
 separator_tennis = round((4/5)*len(df_tennis.index))
 training_tennis = (df_tennis.iloc[:separator_tennis, :]).reset_index(drop = True)
 validation_tennis = (df_tennis.iloc[separator_tennis:, :]).reset_index(drop = True)
-print(validation_tennis)
 
 separator_iris = round((4/5)*len(df_iris.index))
 training_iris = df_iris.iloc[:separator_iris, :].reset_index(drop = True)
@@ -204,7 +203,6 @@ def idx_best_gain (dataframe, data, idx_atribut, tabel_idx_label_change):
 
     for idx_changed_label in tabel_idx_label_change:
         data_temp = copy.deepcopy(data)
-        print("BEST GAIN, GA BERUBAH")
         change_continuous_values(dataframe, data_temp, idx_atribut, idx_changed_label)
         if (gain_info(data_temp, idx_atribut) > max_gain):
             max_gain = gain_info(data_temp, idx_atribut)
@@ -214,22 +212,21 @@ def idx_best_gain (dataframe, data, idx_atribut, tabel_idx_label_change):
 
 def change_continuous_values (dataframe, data, idx_atribut, idx_changed_label): 
     new_value = str(data.data_values[idx_changed_label,idx_atribut])
-    
-    new_dataframe = deepcopy(dataframe)
-    new_dataframe = new_dataframe.drop(data.attributes[idx_atribut], axis=1)
-    print(new_dataframe)
+    # new_dataframe = deepcopy(dataframe)
+    # new_dataframe = new_dataframe.drop(data.attributes[idx_atribut], axis=1)
+    # print(new_dataframe)
 
     for idx in range (data.row):
         if (idx < idx_changed_label):
             data.data_values[idx,idx_atribut] = "< " + new_value
-            new_dataframe.at[idx,data.attributes[idx_atribut]] = "< " + new_value
+            # new_dataframe.at[idx,data.attributes[idx_atribut]] = "< " + new_value
         else:
             data.data_values[idx,idx_atribut] = ">= " + new_value
-            new_dataframe.at[idx,data.attributes[idx_atribut]] = ">= " + new_value
+            # new_dataframe.at[idx,data.attributes[idx_atribut]] = ">= " + new_value
     
-    dataframe =  deepcopy(new_dataframe)
+    # dataframe =  deepcopy(new_dataframe)
 
-    print(dataframe)
+    # print(dataframe)
     # dataframe.columns(data.attributes[idx_atribut])
     # dataframe = dataframe.drop(data.attributes[idx_atribut], 1)
     # dataframe = dataframe.insert(idx_atribut, data.attributes[idx_atribut], data.data_values[:,idx_atribut])
@@ -263,10 +260,10 @@ def change_continuous_atributes (dataframe, data):
         # print(tabel_idx_label_change)
         idx_split = idx_best_gain(dataframe, data, idx_atribut, tabel_idx_label_change)
         # print(idx_split)
-        print("BERUBAH")
+        # print("BERUBAH")
         change_continuous_values(dataframe, data, idx_atribut, idx_split)
-        print(dataframe)
-        input("a")
+        # print(dataframe)
+        # input("a")
 
 #-------------HANDLE MISSING VALUE------------
 def most_common_value(data, col):
@@ -532,6 +529,15 @@ data_training_iris = Data(training_iris)
 
 change_continuous_atributes(training_iris, data_training_iris)
 
+# arr = data_training_iris.attributes
+# print(arr)
+# arr.append('target')
+# print(arr)
+# df = pd.DataFrame(data = data_training_iris.data_values)
+df = pd.DataFrame(data = data_training_iris.data_values)
+df.columns = ["sepal.length","sepal.width","petal.length","petal.width","variety"]
+# df.columns = arr
+
 # list_index = []
 # for x in range (data_training_iris.row):
 #     list_index.append(x)
@@ -540,21 +546,22 @@ change_continuous_atributes(training_iris, data_training_iris)
 # df = pd.DataFrame(np.vstack(data_training_iris))
 # df = pd.DataFrame(data = data_training_iris, index = list_index, columns = (data_training_iris.attributes).append("target"))
 # change_continuous_atributes(validation_iris, data_validasi_iris)
-print(training_iris)
+# print(training_iris)
 
 print("--------------ID3------------")
 
-hasil_id3 = id3(data_training_iris, training_iris)
+hasil_id3 = id3(data_training_iris, df)
 print_tree(hasil_id3,0)
 
 print("--------------C45------------")
 
 # change_continuous_atributes(data_training_iris)
 
-hasil_c45 = c45(data_training_iris, training_iris)
+hasil_c45 = c45(data_training_iris, df)
 print_tree(hasil_c45,0)
 
-data_validasi_tennis = Data(validation_tennis)
+print("--------------Hasil Prune------------")
+data_validasi_iris = Data(validation_iris)
 data_validasi_iris = Data(validation_iris)
 hasil_diprune = prune(hasil_c45, data_validasi_iris, validation_iris, rules, False)
 print_tree(hasil_diprune, 0)
